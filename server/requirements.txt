@@ -1,0 +1,8 @@
+express
+jsonwebtoken
+bcrypt
+cors 
+multer //helps you handle file uploads — like images, PDFs, or any other files — in HTTP requests.
+dotenv 
+cloudinary
+sentry // error tracking and performance monitoring tool    
