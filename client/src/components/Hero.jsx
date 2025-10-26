@@ -5,21 +5,21 @@ import { AppContext } from '../context/AppContext'
 
 const Hero = () => {
 
-    const {setIsSearched,setSearchFilter}=useContext(AppContext);
+    const { setIsSearched, setSearchFilter } = useContext(AppContext);
 
-    const titleRef=useRef(null);
-    const locationRef=useRef(null);
+    const titleRef = useRef(null);
+    const locationRef = useRef(null);
 
-    const onSearch=()=>{
-        const title=titleRef.current.value;
-        const location=locationRef.current.value;
+    const onSearch = () => {
+        const title = titleRef.current.value;
+        const location = locationRef.current.value;
 
         setSearchFilter({
             title,
             location
         });
 
-        console.log("Search clicked with:", {title, location});
+        console.log("Search clicked with:", { title, location });
 
         setIsSearched(true);
     }

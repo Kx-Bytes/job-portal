@@ -1,12 +1,61 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import Navbar from '../components/Navbar'
 import { assets, jobsApplied } from '../assets/assets'
 import moment from 'moment'
 import Footer from '../components/Footer'
+import { AppContext } from '../context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import { useUser, useAuth } from '@clerk/clerk-react'
 
 const Applications = () => {
   const [isEdit, setIsEdit] = useState(false)
   const [resume, setResume] = useState(null)
+  const [uploadedResumeName, setUploadedResumeName] = useState(null)
+  const [isUploading, setIsUploading] = useState(false) // NEW STATE
+
+  const { user } = useUser()
+  const { getToken } = useAuth()
+
+  const { backendUrl, userData, fetchUserData } = useContext(AppContext)
+
+  const updateResume = async () => {
+    if (!resume) {
+      toast.error('Please upload a resume before saving.')
+      return
+    }
+
+    setIsUploading(true) // show uploading message
+
+    try {
+      const formData = new FormData()
+      formData.append('resume', resume)
+
+      const token = await getToken()
+
+      const { data } = await axios.post(
+        `${backendUrl}/api/users/update-resume`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      if (data.success) {
+        toast.success(data.message)
+        setUploadedResumeName(resume.name)
+        await fetchUserData()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+
+    setIsUploading(false)
+    setIsEdit(false)
+    setResume(null)
+  }
 
   return (
     <>
@@ -37,16 +86,49 @@ const Applications = () => {
                 </span>
               </label>
 
+              {/* Uploading message */}
+              {isUploading && (
+                <p className="text-blue-600 text-sm mt-4 flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-4 w-4 text-blue-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  Uploading your resume...
+                </p>
+              )}
+
               <div className="mt-6 flex gap-4 justify-end">
                 <button
-                  onClick={() => setIsEdit(false)}
+                  onClick={updateResume}
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
+                  disabled={isUploading}
+                  className={`px-5 py-2 rounded-lg transition ${
+                    isUploading
+                      ? 'bg-blue-400 text-white cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
                 >
-                  Save
+                  {isUploading ? 'Uploading...' : 'Save'}
                 </button>
                 <button
                   onClick={() => setIsEdit(false)}
+                  disabled={isUploading}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-lg transition"
                 >
                   Cancel
@@ -58,7 +140,9 @@ const Applications = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-700 mb-2">Current Resume</h3>
                 <p className="text-gray-500 text-sm">
-                  {resume ? resume.name : 'No resume uploaded yet.'}
+                  {uploadedResumeName
+                    ? uploadedResumeName
+                    : userData?.resumeName || 'No resume uploaded yet.'}
                 </p>
               </div>
               <button
@@ -75,9 +159,7 @@ const Applications = () => {
         <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
           <div className="flex justify-between items-center mb-6 border-b pb-2">
             <h2 className="text-2xl font-semibold text-gray-800">Applied Jobs</h2>
-            <span className="text-gray-500 text-sm">
-              Total: {jobsApplied.length}
-            </span>
+            <span className="text-gray-500 text-sm">Total: {jobsApplied.length}</span>
           </div>
 
           {jobsApplied.length > 0 ? (
@@ -93,42 +175,38 @@ const Applications = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {jobsApplied.map((job, index) =>
-                    true ? (
-                      <tr
-                        key={index}
-                        className="hover:bg-blue-50 transition text-gray-700 text-sm border-b"
-                      >
-                        <td className="p-3 flex items-center gap-3">
-                          <img
-                            src={job.logo}
-                            alt={job.company}
-                            className="w-8 h-8 object-contain rounded-md"
-                          />
-                          <span className="font-medium">{job.company}</span>
-                        </td>
-                        <td className="p-3">{job.title}</td>
-                        <td className="p-3">{job.location}</td>
-                        <td className="p-3">
-                          {moment(job.appliedAt).format('MMM DD, YYYY')}
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold
-                              ${
-                                job.status === 'Accepted'
-                                  ? 'bg-green-100 text-green-700'
-                                  : job.status === 'Pending'
-                                  ? 'bg-yellow-100 text-yellow-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                          >
-                            {job.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ) : null
-                  )}
+                  {jobsApplied.map((job, index) => (
+                    <tr
+                      key={index}
+                      className="hover:bg-blue-50 transition text-gray-700 text-sm border-b"
+                    >
+                      <td className="p-3 flex items-center gap-3">
+                        <img
+                          src={job.logo}
+                          alt={job.company}
+                          className="w-8 h-8 object-contain rounded-md"
+                        />
+                        <span className="font-medium">{job.company}</span>
+                      </td>
+                      <td className="p-3">{job.title}</td>
+                      <td className="p-3">{job.location}</td>
+                      <td className="p-3">{moment(job.appliedAt).format('MMM DD, YYYY')}</td>
+                      <td className="p-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold
+                            ${
+                              job.status === 'Accepted'
+                                ? 'bg-green-100 text-green-700'
+                                : job.status === 'Pending'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                        >
+                          {job.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -139,7 +217,7 @@ const Applications = () => {
           )}
         </section>
       </div>
-      <Footer/>
+      <Footer />
     </>
   )
 }

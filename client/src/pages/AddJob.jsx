@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { JobCategories, JobLocations } from '../assets/assets';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import axios from 'axios';
+import { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import { toast } from 'react-toastify';
 
 const AddJob = () => {
   const [title, setTitle] = useState('');
@@ -14,6 +18,9 @@ const AddJob = () => {
   const editorRef = useRef(null);
   const quillRef = useRef(null);
 
+  const {backendUrl,companyToken}=useContext(AppContext);
+
+  
   useEffect(() => {
     if (editorRef.current && !quillRef.current) {
       quillRef.current = new Quill(editorRef.current, {
@@ -29,30 +36,46 @@ const AddJob = () => {
           ],
         },
       });
-
+      
       // Update state when content changes
       quillRef.current.on('text-change', () => {
         setDescription(quillRef.current.root.innerHTML);
       });
     }
   }, []);
-
-  const handleSubmit = (e) => {
+  
+  
+  
+  const onSubmitHandler=async(e)=>{
     e.preventDefault();
-    console.log({
-      title,
-      category,
-      location,
-      level,
-      salary,
-      description,
-    });
-  };
+
+    try {
+      const description=quillRef.current.root.innerHTML;
+
+      const {data}= await axios.post(backendUrl+'/api/company/post-job',{
+        title,description,location,salary,category,level},{headers:{token:companyToken}});
+      
+
+      if(data.success){
+        toast.success(data.message);
+        setTitle('');
+        setSalary(0);
+        quillRef.current.root.innerHTML="";
+
+      }
+      else{
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error);
+    }
+
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 flex justify-center items-start">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={onSubmitHandler}
         className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-3xl space-y-8 border border-gray-100"
       >
         <h1 className="text-3xl font-semibold text-gray-800 text-center">

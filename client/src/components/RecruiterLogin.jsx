@@ -1,21 +1,27 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
+import axios from 'axios'
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const RecruiterLogin = () => {
+
+  const navigate = useNavigate();
+
   const [state, setState] = useState('Login'); // "Login" or "Register"
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [image, setImage] = useState(null);
   const [isTextDataSubmitted, setIsTextDataSubmitted] = useState(false);
-  const { setShowRecruiterLogin } = useContext(AppContext);
+  const { setShowRecruiterLogin, backendUrl, setCompanyToken, setCompanyData } = useContext(AppContext);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) setImage(file);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsTextDataSubmitted(true);
 
@@ -27,6 +33,53 @@ const RecruiterLogin = () => {
       image,
     });
 
+    try {
+      
+      if(state==='Login'){
+        const { data } = await axios.post(backendUrl + '/api/company/login', { email, password });
+
+      if (data.success) {
+        toast.success('Login successful!');
+        setCompanyData(data.company);
+        setCompanyToken(data.token);
+        localStorage.setItem('companyToken', data.token);
+        setShowRecruiterLogin(false);
+        navigate('/dashboard');
+      } else {
+        toast.error(data.message); // in case API sends 200 but success=false
+      }
+    }
+    else{
+      const formData=new FormData();
+      formData.append('name',name)
+      formData.append('email',email)
+      formData.append('password',password)
+      formData.append('image',image)
+
+      const { data } = await axios.post(backendUrl + '/api/company/register', formData);
+
+      if (data.success) {
+        toast.success('Login successful!');
+        setCompanyData(data.company);
+        setCompanyToken(data.token);
+        localStorage.setItem('companyToken', data.token);
+        setShowRecruiterLogin(false);
+        navigate('/dashboard');
+      } else {
+        toast.error(data.message); // in case API sends 200 but success=false
+      }
+    }
+    } catch (error) {
+      console.log(error);
+
+      // ✅ show toast for Axios error
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
+    }
+
     setTimeout(() => {
       setIsTextDataSubmitted(false);
     }, 2000);
@@ -37,12 +90,12 @@ const RecruiterLogin = () => {
     // Replace with navigation or modal logic if needed
   };
 
-  useEffect(() => {     
+  useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'auto';
-    };  
-  }, []);  
+    };
+  }, []);
 
 
   return (
@@ -147,8 +200,8 @@ const RecruiterLogin = () => {
                 ? 'Logging in...'
                 : 'Registering...'
               : state === 'Login'
-              ? 'Login'
-              : 'Register'}
+                ? 'Login'
+                : 'Register'}
           </button>
         </form>
 

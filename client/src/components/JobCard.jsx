@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const JobCard = ({ job }) => {
 
-    const navigate=useNavigate();
+  const navigate = useNavigate();
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full cursor-pointer">
 
@@ -12,7 +12,7 @@ const JobCard = ({ job }) => {
       <div className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-200">
           <img
-            src={assets.company_icon}
+            src={job.companyId.image}
             alt="Company logo"
             className="w-8 h-8 object-contain"
           />
@@ -44,10 +44,10 @@ const JobCard = ({ job }) => {
 
       {/* Buttons */}
       <div className="flex items-center gap-3 mt-auto">
-        <button onClick={()=>{navigate(`/apply-job/${job._id}`);scrollTo(0,0)}} className="flex-1 bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
+        <button onClick={() => { navigate(`/apply-job/${job._id}`); scrollTo(0, 0) }} className="flex-1 bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
           Apply Now
         </button>
-        <button onClick={()=>{navigate(`/apply-job/${job._id}`);scrollTo(0,0)}} className="flex-1 border border-blue-600 text-blue-600 font-medium py-2.5 rounded-lg hover:bg-blue-50 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
+        <button onClick={() => { navigate(`/apply-job/${job._id}`); scrollTo(0, 0) }} className="flex-1 border border-blue-600 text-blue-600 font-medium py-2.5 rounded-lg hover:bg-blue-50 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
           Learn More
         </button>
       </div>

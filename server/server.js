@@ -1,37 +1,57 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import connectDB from './config/db.js';
-import './config/instrument.js';
-import * as Sentry from "@sentry/node";
-import { clerkWebhooks } from './controllers/Webhooks.js'
+// Import necessary modules
+import express from 'express';              // Express framework for building APIs
+import cors from 'cors';                    // Middleware to enable Cross-Origin Resource Sharing
+import dotenv from 'dotenv';                // To load environment variables from .env file
+import connectDB from './config/db.js';     // Custom function to connect to MongoDB
+import './config/instrument.js';            // Initializes Sentry instrumentation (performance/error monitoring)
+import * as Sentry from "@sentry/node";     // Sentry SDK for error tracking
+import { clerkWebhooks } from './controllers/Webhooks.js'; // Clerk webhook handler
+import companyRoutes from './routes/companyRoutes.js';      // Company-related API routes
+import connectCloudinary from './config/cloudinary.js';
+import jobRoutes from './routes/jobRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import {clerkMiddleware} from '@clerk/express'
+
+// Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3005; // Default port 3005 if not specified in environment
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ---------------- Middleware ----------------
+app.use(cors());              // Enable CORS for all routes
+app.use(express.json());      // Parse incoming JSON request bodies
+app.use(clerkMiddleware());
 
-//Connect to DB
-await connectDB();
+// ---------------- Database Connection ----------------
+await connectDB();            // Connect to MongoDB using the configuration in db.js
+await connectCloudinary();
+// ---------------- Routes ----------------
 
-//Routes
+// Basic route to check if server is running
 app.get('/', (req, res) => {
     res.send('Welcome to the ATS Backend Server');
 });
 
-
+// Route to manually trigger a Sentry test error
 app.get('/debug-sentry', function mainHandler(req, res) {
     throw new Error("My first Sentry Error!");
 });
 
+// Clerk webhook listener endpoint
 app.post('/webhooks', clerkWebhooks);
+// Company-related routes (e.g., CRUD operations)
+app.use('/api/company', companyRoutes);
+// Job-related routes (e.g., job listings, details)
+app.use('/api/jobs', jobRoutes);
+//User-related routes
+app.use('/api/users',userRoutes);
 
-Sentry.setupExpressErrorHandler(app);
+// ---------------- Sentry Error Handler ----------------
+Sentry.setupExpressErrorHandler(app); // Capture and report unhandled exceptions to Sentry
 
-// Start Server
+// ---------------- Start Server ----------------
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-}); 
+});
+

@@ -1,10 +1,65 @@
 import React from 'react'
-import { manageJobsData } from '../assets/assets'
 import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useContext } from 'react'
+import { AppContext } from '../context/AppContext'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import { useEffect } from 'react'
 
 const ManageJobs = () => {
   const navigate = useNavigate();
+
+  const [jobs, setJobs] = useState([]);
+  const { backendUrl, companyToken } = useContext(AppContext);
+
+
+  const fetchCompanyJobs = async () => {
+    try {
+
+      const { data } = await axios.get(backendUrl +'/api/company/list-jobs', { headers: { token: companyToken } });
+
+      if (data.success) {
+        setJobs(data.jobsData.reverse())
+        console.log(data.jobsData);
+      }
+      else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error);
+    }
+
+  }
+
+  //Function To change Job Visibility
+
+  const changeJobVisibility=async(id)=>{
+    try {
+            const {data}= await axios.post(backendUrl+'/api/company/change-visibility',
+              {id},{headers:{token:companyToken}});
+
+            if(data.success){
+              toast.success(data.message);
+              fetchCompanyJobs();
+            }
+            else{
+              toast.error(data.message);
+            }
+
+    } catch (error) {
+      toast.error(error);
+    }
+  }
+
+
+  useEffect(() => {
+    if (companyToken) {
+      fetchCompanyJobs();
+    }
+  }, [companyToken])
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -35,7 +90,7 @@ const ManageJobs = () => {
             </thead>
 
             <tbody>
-              {manageJobsData.map((job, index) => (
+              {jobs.map((job, index) => (
                 <tr
                   key={index}
                   className="border-t hover:bg-gray-50 transition duration-200"
@@ -49,10 +104,9 @@ const ManageJobs = () => {
                     <input
                       type="checkbox"
                       checked={job.visible}
-                      readOnly
+                      onChange={()=>changeJobVisibility(job._id)}
                       className="w-4 h-4 accent-blue-600 cursor-pointer"
                     />
-                    
                   </td>
                 </tr>
               ))}

@@ -1,4 +1,4 @@
-import React, { useContext, useState ,useEffect} from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { assets, JobCategories, JobLocations } from '../assets/assets';
 import JobCard from './JobCard';
@@ -12,13 +12,13 @@ const JobListing = () => {
     const [selectedLocations, setSelectedLocations] = useState([])
     const [filteredJobs, setFilteredJobs] = useState(jobs)
 
-    const handleCategoryChange = (category) => {        
+    const handleCategoryChange = (category) => {
         setSelectedCategories((prev) => {
             if (prev.includes(category)) {
                 return prev.filter((cat) => cat !== category);
-            }       
+            }
             return [...prev, category];
-        }       
+        }
 
         );
     };
@@ -30,7 +30,7 @@ const JobListing = () => {
             }
             return [...prev, location];
         });
-    };  
+    };
 
     useEffect(() => {
 
@@ -44,15 +44,15 @@ const JobListing = () => {
             return selectedLocations.includes(job.location);
         }
 
-        const matchTitle = (job) => {   
+        const matchTitle = (job) => {
             if (searchFilter.title === '') return true;
             return job.title.toLowerCase().includes(searchFilter.title.toLowerCase());
-        }   
+        }
 
         const matchLocationFilter = (job) => {
             if (searchFilter.location === '') return true;
             return job.location.toLowerCase().includes(searchFilter.location.toLowerCase());
-        }   
+        }
 
         const newFilteredJobs = jobs.slice().reverse().filter((job) => matchCategory(job) && matchLocation(job) && matchTitle(job) && matchLocationFilter(job));
         setFilteredJobs(newFilteredJobs);
@@ -60,7 +60,7 @@ const JobListing = () => {
 
 
     }, [jobs, selectedCategories, selectedLocations, searchFilter]);
-    
+
 
     return (
         <div className="max-w-7xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
@@ -182,8 +182,8 @@ const JobListing = () => {
                                         key={index}
                                         onClick={() => setCurrentPage(index + 1)}
                                         className={`px-4 py-2 rounded-lg transition ${currentPage === index + 1
-                                                ? "bg-gray-600 text-white"
-                                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                            ? "bg-gray-600 text-white"
+                                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                                             }`}
                                     >
                                         {index + 1}

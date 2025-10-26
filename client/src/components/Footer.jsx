@@ -8,7 +8,7 @@ const Footer = () => {
 
         {/* Logo & Copyright */}
         <div className="flex flex-col items-center md:items-start">
-          <img src={assets.logo} alt="Logo" className="h-12 mb-2"/>
+          <img src={assets.logo} alt="Logo" className="h-12 mb-2" />
           <p className="text-gray-600 text-sm">© {new Date().getFullYear()} Kisan. All rights reserved.</p>
         </div>
 
@@ -23,13 +23,13 @@ const Footer = () => {
         {/* Social Icons */}
         <div className="flex gap-4">
           <a href="#" className="hover:opacity-80 transition">
-            <img src={assets.facebook_icon} alt="Facebook" className="h-6 w-6"/>
+            <img src={assets.facebook_icon} alt="Facebook" className="h-6 w-6" />
           </a>
           <a href="#" className="hover:opacity-80 transition">
-            <img src={assets.instagram_icon} alt="Instagram" className="h-6 w-6"/>
+            <img src={assets.instagram_icon} alt="Instagram" className="h-6 w-6" />
           </a>
           <a href="#" className="hover:opacity-80 transition">
-            <img src={assets.twitter_icon} alt="Twitter" className="h-6 w-6"/>
+            <img src={assets.twitter_icon} alt="Twitter" className="h-6 w-6" />
           </a>
         </div>
 

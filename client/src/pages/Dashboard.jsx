@@ -1,9 +1,28 @@
 import React from 'react'
 import { assets } from '../assets/assets'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-
+import { useContext } from 'react';
+import { AppContext } from '../context/AppContext';
+import { useEffect } from 'react';
 const Dashboard = () => {
     const navigate = useNavigate();
+
+    const { companyData ,setCompanyData,setCompanyToken} = useContext(AppContext);
+
+    const logout=()=>{
+        setCompanyData(null);
+        localStorage.removeItem('companyToken');
+        setCompanyToken(null);
+        navigate('/');
+
+    }
+
+    useEffect(() => {
+        if(companyData){
+            navigate('/dashboard/manage-jobs')
+        }
+    }, [companyData])
+    
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -18,28 +37,32 @@ const Dashboard = () => {
                 />
 
                 {/* User Info */}
-                <div className="relative group">
-                    <div className="flex items-center cursor-pointer">
-                        <p className="text-gray-700 font-medium mr-2">Welcome</p>
-                        <img
-                            src={assets.company_icon}
-                            alt="Company"
-                            className="h-10 w-10 rounded-full border border-gray-300"
-                        />
-                    </div>
 
-                    {/* Dropdown */}
-                    <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-10">
-                        <ul className="py-2 text-gray-700">
-                            <li
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                onClick={() => navigate('/')} // Replace with logout logic
-                            >
-                                Logout
-                            </li>
-                        </ul>
+                {companyData && (
+                    <div className="relative group">
+                        <div className="flex items-center cursor-pointer">
+                            <p className="text-gray-700 font-medium mr-2">Welcome ,{companyData.name}</p>
+                            <img
+                                src={companyData.image}
+                                alt="Company"
+                                className="h-10 w-10 rounded-full border border-gray-300"
+                            />
+                        </div>
+
+                        {/* Dropdown */}
+                        <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-200 z-10">
+                            <ul className="py-2 text-gray-700">
+                                <li
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={logout} // Replace with logout logic
+                                >
+                                    Logout
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                )}
+
             </div>
 
             {/* Sidebar + Content below navbar */}
@@ -50,36 +73,33 @@ const Dashboard = () => {
                         <NavLink
                             to={"add-job"}
                             className={({ isActive }) =>
-                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${
-                                    isActive ? 'bg-gray-200 font-semibold' : ''
+                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${isActive ? 'bg-gray-200 font-semibold' : ''
                                 }`
                             }
                         >
-                            <img src={assets.add_icon} alt="" className="h-6 w-6"/>
+                            <img src={assets.add_icon} alt="" className="h-6 w-6" />
                             <p>Add Job</p>
                         </NavLink>
 
                         <NavLink
                             to={"manage-jobs"}
                             className={({ isActive }) =>
-                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${
-                                    isActive ? 'bg-gray-200 font-semibold' : ''
+                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${isActive ? 'bg-gray-200 font-semibold' : ''
                                 }`
                             }
                         >
-                            <img src={assets.home_icon} alt="" className="h-6 w-6"/>
+                            <img src={assets.home_icon} alt="" className="h-6 w-6" />
                             <p>Manage Jobs</p>
                         </NavLink>
 
                         <NavLink
                             to={'view-applications'}
                             className={({ isActive }) =>
-                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${
-                                    isActive ? 'bg-gray-200 font-semibold' : ''
+                                `flex items-center space-x-3 p-2 rounded-md hover:bg-gray-100 ${isActive ? 'bg-gray-200 font-semibold' : ''
                                 }`
                             }
                         >
-                            <img src={assets.person_tick_icon} alt="" className="h-6 w-6"/>
+                            <img src={assets.person_tick_icon} alt="" className="h-6 w-6" />
                             <p>View Applications</p>
                         </NavLink>
                     </ul>
