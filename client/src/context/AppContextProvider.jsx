@@ -144,6 +144,7 @@ export const AppContextProvider = ({ children }) => {
         fetchUserData,
         fetchUserApplications
     };
+    
     return (
         <AppContext.Provider value={value}>
             {children}
