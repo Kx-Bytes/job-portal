@@ -26,7 +26,6 @@ quil==1.1.30                      # Quill-related utilities (possible typo/legac
 # Authentication
 # --------------------------------
 
-@clerk/clerk-react==5.53.2        # Clerk authentication library for React
 
 # --------------------------------
 # Miscellaneous
