@@ -67,6 +67,26 @@ export const AppContextProvider = ({ children }) => {
         }
     }
 
+    //Function to fetch user's applied application data
+
+    const fetchUserApplications = async () => {
+        try {
+
+            const token = await getToken();
+            const { data } = await axios.get(backendUrl + '/api/users/applications',
+                { headers: { Authorization: `Bearer ${token}` } });
+
+            if (data.success) {
+                setUserApplications(data.applications); // <-- fix here
+            }
+            else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.error("Error fetching job data:", error);
+        }
+    }
+
 
     //Function to fetch job Data
 
@@ -106,6 +126,7 @@ export const AppContextProvider = ({ children }) => {
 
         if (user) {
             fetchUserData();
+            fetchUserApplications();
         }
     }, [user]);
 
@@ -118,9 +139,10 @@ export const AppContextProvider = ({ children }) => {
         companyData, setCompanyData,
         companyToken, setCompanyToken,
         backendUrl,
-        userData,setUserData,
-        userApplications,setUserApplications,
-        fetchUserData
+        userData, setUserData,
+        userApplications, setUserApplications,
+        fetchUserData,
+        fetchUserApplications
     };
     return (
         <AppContext.Provider value={value}>

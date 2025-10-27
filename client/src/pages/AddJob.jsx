@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { JobCategories, JobLocations } from '../assets/assets';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import axios from 'axios';
-import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { toast } from 'react-toastify';
 
@@ -12,15 +11,14 @@ const AddJob = () => {
   const [location, setLocation] = useState('Bangalore');
   const [category, setCategory] = useState('Programming');
   const [level, setLevel] = useState('Beginner level');
-  const [salary, setSalary] = useState(0);
+  const [salary, setSalary] = useState('');
   const [description, setDescription] = useState('');
 
   const editorRef = useRef(null);
   const quillRef = useRef(null);
 
-  const {backendUrl,companyToken}=useContext(AppContext);
+  const { backendUrl, companyToken } = useContext(AppContext);
 
-  
   useEffect(() => {
     if (editorRef.current && !quillRef.current) {
       quillRef.current = new Quill(editorRef.current, {
@@ -36,41 +34,52 @@ const AddJob = () => {
           ],
         },
       });
-      
-      // Update state when content changes
+
+      // Listen to changes
       quillRef.current.on('text-change', () => {
         setDescription(quillRef.current.root.innerHTML);
       });
     }
   }, []);
-  
-  
-  
-  const onSubmitHandler=async(e)=>{
+
+  const onSubmitHandler = async (e) => {
     e.preventDefault();
 
-    try {
-      const description=quillRef.current.root.innerHTML;
-
-      const {data}= await axios.post(backendUrl+'/api/company/post-job',{
-        title,description,location,salary,category,level},{headers:{token:companyToken}});
-      
-
-      if(data.success){
-        toast.success(data.message);
-        setTitle('');
-        setSalary(0);
-        quillRef.current.root.innerHTML="";
-
-      }
-      else{
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error);
+    if (!title || !description || !salary) {
+      toast.error('Please fill in all required fields.');
+      return;
     }
 
-  }
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/company/post-job`,
+        { title, description, location, salary, category, level },
+        { headers: { token: companyToken } }
+      );
+
+      if (data.success) {
+        toast.success(data.message || 'Job added successfully.');
+
+        // Reset form fields
+        setTitle('');
+        setSalary('');
+        setCategory('Programming');
+        setLocation('Bangalore');
+        setLevel('Beginner level');
+        setDescription('');
+
+        // Clear Quill editor content
+        if (quillRef.current) {
+          quillRef.current.root.innerHTML = '';
+        }
+      } else {
+        toast.error(data.message || 'Failed to add job.');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Something went wrong while adding the job.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 flex justify-center items-start">
@@ -92,6 +101,7 @@ const AddJob = () => {
           </label>
           <input
             type="text"
+            value={title}
             placeholder="e.g. Frontend Developer"
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -117,6 +127,7 @@ const AddJob = () => {
               Job Category
             </label>
             <select
+              value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
@@ -133,6 +144,7 @@ const AddJob = () => {
               Job Location
             </label>
             <select
+              value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
@@ -149,6 +161,7 @@ const AddJob = () => {
               Job Level
             </label>
             <select
+              value={level}
               onChange={(e) => setLevel(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
@@ -164,8 +177,10 @@ const AddJob = () => {
             </label>
             <input
               type="number"
+              value={salary}
               placeholder="e.g. 100000"
               onChange={(e) => setSalary(e.target.value)}
+              required
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
@@ -175,7 +190,7 @@ const AddJob = () => {
         <div className="text-center">
           <button
             type="submit"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md cursor-pointer" 
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 shadow-md cursor-pointer"
           >
             Add Job
           </button>

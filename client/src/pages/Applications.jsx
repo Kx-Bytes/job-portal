@@ -1,6 +1,6 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
-import { assets, jobsApplied } from '../assets/assets'
+import { assets } from '../assets/assets'
 import moment from 'moment'
 import Footer from '../components/Footer'
 import { AppContext } from '../context/AppContext'
@@ -12,12 +12,13 @@ const Applications = () => {
   const [isEdit, setIsEdit] = useState(false)
   const [resume, setResume] = useState(null)
   const [uploadedResumeName, setUploadedResumeName] = useState(null)
-  const [isUploading, setIsUploading] = useState(false) // NEW STATE
+  const [isUploading, setIsUploading] = useState(false)
 
   const { user } = useUser()
   const { getToken } = useAuth()
 
-  const { backendUrl, userData, fetchUserData } = useContext(AppContext)
+  const { backendUrl, userData, fetchUserData, userApplications, fetchUserApplications } =
+    useContext(AppContext)
 
   const updateResume = async () => {
     if (!resume) {
@@ -25,7 +26,7 @@ const Applications = () => {
       return
     }
 
-    setIsUploading(true) // show uploading message
+    setIsUploading(true)
 
     try {
       const formData = new FormData()
@@ -33,18 +34,14 @@ const Applications = () => {
 
       const token = await getToken()
 
-      const { data } = await axios.post(
-        `${backendUrl}/api/users/update-resume`,
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
+      const { data } = await axios.post(`${backendUrl}/api/users/update-resume`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
       if (data.success) {
         toast.success(data.message)
         setUploadedResumeName(resume.name)
-        await fetchUserData()
+        await fetchUserData() // refresh user info
       } else {
         toast.error(data.message)
       }
@@ -57,6 +54,12 @@ const Applications = () => {
     setResume(null)
   }
 
+  useEffect(() => {
+    if (user) {
+      fetchUserApplications()
+    }
+  }, [user])
+
   return (
     <>
       <Navbar />
@@ -66,8 +69,13 @@ const Applications = () => {
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-2">Your Resume</h2>
 
           {isEdit ? (
+            // =========================
+            // Upload/Edit Mode
+            // =========================
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-              <h3 className="text-lg font-medium text-gray-700 mb-4">Edit your resume</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">
+                {userData?.resume ? 'Update your resume' : 'Upload your resume'}
+              </h3>
 
               <label
                 htmlFor="resumeUpload"
@@ -86,7 +94,6 @@ const Applications = () => {
                 </span>
               </label>
 
-              {/* Uploading message */}
               {isUploading && (
                 <p className="text-blue-600 text-sm mt-4 flex items-center gap-2">
                   <svg
@@ -136,20 +143,37 @@ const Applications = () => {
               </div>
             </div>
           ) : (
+            // =========================
+            // Display Mode
+            // =========================
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium text-gray-700 mb-2">Current Resume</h3>
-                <p className="text-gray-500 text-sm">
-                  {uploadedResumeName
-                    ? uploadedResumeName
-                    : userData?.resumeName || 'No resume uploaded yet.'}
-                </p>
+
+                {userData?.resume ? (
+                  <div className="flex items-center gap-4">
+                    <p className="text-gray-500 text-sm">
+                      {uploadedResumeName || userData.resumeName || 'resume.pdf'}
+                    </p>
+                    <a
+                      href={userData.resume}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 border border-green-300 rounded-lg text-sm font-medium transition"
+                    >
+                      View Resume
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No resume uploaded yet.</p>
+                )}
               </div>
+
               <button
                 onClick={() => setIsEdit(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
               >
-                Edit Resume
+                {userData?.resume ? 'Edit Resume' : 'Upload Resume'}
               </button>
             </div>
           )}
@@ -159,10 +183,10 @@ const Applications = () => {
         <section className="bg-white shadow-md rounded-2xl p-6 border border-gray-100">
           <div className="flex justify-between items-center mb-6 border-b pb-2">
             <h2 className="text-2xl font-semibold text-gray-800">Applied Jobs</h2>
-            <span className="text-gray-500 text-sm">Total: {jobsApplied.length}</span>
+            <span className="text-gray-500 text-sm">Total: {userApplications.length}</span>
           </div>
 
-          {jobsApplied.length > 0 ? (
+          {userApplications.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -175,21 +199,21 @@ const Applications = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {jobsApplied.map((job, index) => (
+                  {userApplications.map((job, index) => (
                     <tr
                       key={index}
                       className="hover:bg-blue-50 transition text-gray-700 text-sm border-b"
                     >
                       <td className="p-3 flex items-center gap-3">
                         <img
-                          src={job.logo}
-                          alt={job.company}
+                          src={job.companyId.image}
+                          alt={job.companyId.image}
                           className="w-8 h-8 object-contain rounded-md"
                         />
                         <span className="font-medium">{job.company}</span>
                       </td>
-                      <td className="p-3">{job.title}</td>
-                      <td className="p-3">{job.location}</td>
+                      <td className="p-3">{job.jobId.title}</td>
+                      <td className="p-3">{job.jobId.location}</td>
                       <td className="p-3">{moment(job.appliedAt).format('MMM DD, YYYY')}</td>
                       <td className="p-3">
                         <span

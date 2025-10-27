@@ -112,14 +112,14 @@ const getCompanyData = async (req, res) => {
 // POST A JOB
 // -----------------------------------------------------
 const postJob = async (req, res) => {
-    const { title, description, location, salary ,level,category} = req.body;
+    const { title, description, location, salary, level, category } = req.body;
     const companyId = req.company._id; // from auth middleware
 
-    if (!title || !description || !location ||!salary  || !level || !category) {
+    if (!title || !description || !location || !salary || !level || !category) {
         return res.status(400).json({ message: "Title, description, and location are required" });
     }
 
-    try{
+    try {
         const newJob = new Job({
             title,
             description,
@@ -131,27 +131,39 @@ const postJob = async (req, res) => {
             date: Date.now(),
             visible: true
         });
-       await newJob.save();
+        await newJob.save();
         res.json({
-            success:true,
-            message:"Job posted successfully",
+            success: true,
+            message: "Job posted successfully",
             newJob
-        }); 
+        });
 
-    }catch(error){
+    } catch (error) {
         console.error("Error posting job:", error);
         res.status(500).json({ message: "Server error" });
 
     }
 
-   
+
 };
 
 // -----------------------------------------------------
 // GET JOB APPLICANTS FOR A COMPANY’S JOB
 // -----------------------------------------------------
 const getCompanyJobApplicants = async (req, res) => {
-    
+    try {
+        const companyId = req.company._id;
+
+        //Find job applications for the user and populate related data
+        const applicants = await JobApplication.find({ companyId })
+            .populate('userId', 'name email resume')
+            .populate('jobId', 'title location category level salary')
+            .exec()
+
+        return res.json({ success: true, applicants })
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
 };
 
 // -----------------------------------------------------
@@ -159,18 +171,18 @@ const getCompanyJobApplicants = async (req, res) => {
 // -----------------------------------------------------
 const getCompanyPostedJobs = async (req, res) => {
     try {
-        const companyId=req.company._id;
+        const companyId = req.company._id;
 
-        const jobs=await Job.find({companyId})
+        const jobs = await Job.find({ companyId })
 
         //Adding no:of Applicants
-        const jobsData=await Promise.all(jobs.map(async(job)=>{
-            const applicants=await JobApplication.find({jobId:job._id});
-            return {...job.toObject(),applicants:applicants.length}
+        const jobsData = await Promise.all(jobs.map(async (job) => {
+            const applicants = await JobApplication.find({ jobId: job._id });
+            return { ...job.toObject(), applicants: applicants.length }
         }))
-        res.json({success:true,jobsData:jobsData})
+        res.json({ success: true, jobsData: jobsData })
     } catch (error) {
-        res.json({success:false,message:error.message})
+        res.json({ success: false, message: error.message })
     }
 };
 
@@ -178,8 +190,30 @@ const getCompanyPostedJobs = async (req, res) => {
 // CHANGE APPLICATION STATUS (e.g., accepted/rejected)
 // -----------------------------------------------------
 const changeJobApplicationStatus = async (req, res) => {
-    
+  try {
+    const { id, status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({ success: false, message: 'Missing id or status' });
+    }
+
+    const updatedApplication = await JobApplication.findOneAndUpdate(
+      { _id: id },
+      { status },
+      { new: true } // return the updated document
+    );
+
+    if (!updatedApplication) {
+      return res.status(404).json({ success: false, message: 'Job application not found' });
+    }
+
+    res.json({ success: true, message: 'Status changed successfully', data: updatedApplication });
+  } catch (error) {
+    console.error('Error changing job application status:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
+
 
 // -----------------------------------------------------
 // CHANGE COMPANY VISIBILITY (e.g., visible/invisible to users)
@@ -187,13 +221,13 @@ const changeJobApplicationStatus = async (req, res) => {
 const changeVisibility = async (req, res) => {
 
     try {
-        const {id} = req.body;
-        const companyId=req.company._id;
-        
+        const { id } = req.body;
+        const companyId = req.company._id;
+
         const job = await Job.findById(id);
 
-        if (companyId.toString()===job.companyId.toString()) {
-            job.visible=!job.visible;
+        if (companyId.toString() === job.companyId.toString()) {
+            job.visible = !job.visible;
         }
 
         await job.save();
